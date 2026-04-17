@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BrandLogoButton } from "./BrandLogo.jsx";
 
 const TOTAL = 5;
 
@@ -56,23 +57,6 @@ const ATOUTS = [
   { id: "terrasse", title: "Possibilité terrasse", desc: "Trottoir large, exposition" },
   { id: "mutation", title: "Quartier en mutation", desc: "Nouveaux logements, dynamique" },
 ];
-
-function LogoMark() {
-  return (
-    <>
-      <span className="brand__mark" aria-hidden>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="11" fill="currentColor" />
-          <path
-            d="M12 7a3 3 0 0 0-3 3c0 2.5 3 6 3 6s3-3.5 3-6a3 3 0 0 0-3-3Zm0 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"
-            fill="#fff"
-          />
-        </svg>
-      </span>
-      <span className="brand__name">Mie.</span>
-    </>
-  );
-}
 
 function InputPinIcon() {
   return (
@@ -139,9 +123,7 @@ export default function Questionnaire({ onCancel, onComplete }) {
   return (
     <div className="quiz">
       <nav className="nav quiz__nav">
-        <button type="button" className="brand brand--btn" onClick={onCancel} aria-label="Mie. accueil">
-          <LogoMark />
-        </button>
+        <BrandLogoButton onClick={onCancel} />
         <div className="nav__pill">
           <button type="button" className="nav__pill-btn" onClick={onCancel}>
             La méthode

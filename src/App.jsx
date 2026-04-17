@@ -1,52 +1,8 @@
 import { useState } from "react";
 import Questionnaire from "./Questionnaire.jsx";
-
-function Logo() {
-  return (
-    <a href="#" className="brand" aria-label="Mie. accueil">
-      <span className="brand__mark" aria-hidden>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="11" fill="currentColor" />
-          <path
-            d="M12 7a3 3 0 0 0-3 3c0 2.5 3 6 3 6s3-3.5 3-6a3 3 0 0 0-3-3Zm0 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"
-            fill="#fff"
-          />
-        </svg>
-      </span>
-      <span className="brand__name">Mie.</span>
-    </a>
-  );
-}
-
-function MapPinMarker({ variant, letter, className }) {
-  const fill = variant === "subject" ? "#c53636" : "#2f5d45";
-  return (
-    <span className={`map-pin map-pin--${variant} ${className ?? ""}`}>
-      <span className="map-pin__letter">{letter}</span>
-      <svg className="map-pin__shape" viewBox="0 0 36 44" width="36" height="44" aria-hidden>
-        <path
-          d="M18 2C11.4 2 6 7.1 6 13.4c0 4.5 2.8 9.6 6.5 14.1 2.8 3.4 5.5 5.8 5.5 5.8s2.7-2.4 5.5-5.8c3.7-4.5 6.5-9.6 6.5-14.1C30 7.1 24.6 2 18 2Z"
-          fill={fill}
-        />
-        <circle cx="18" cy="14" r="5" fill="#fff" />
-      </svg>
-    </span>
-  );
-}
-
-function MapPinGrey({ className }) {
-  return (
-    <span className={`map-pin map-pin--grey ${className ?? ""}`} aria-hidden>
-      <svg className="map-pin__shape map-pin__shape--sm" viewBox="0 0 36 44" width="22" height="28">
-        <path
-          d="M18 4c-5.5 0-10 4.3-10 9.6 0 3.8 2.3 8 5.4 11.7 2.2 2.7 4.6 4.7 4.6 4.7s2.4-2 4.6-4.7c3.1-3.7 5.4-7.9 5.4-11.7C28 8.3 23.5 4 18 4Z"
-          fill="#9a9a9a"
-        />
-        <circle cx="18" cy="13.5" r="3.2" fill="#fff" />
-      </svg>
-    </span>
-  );
-}
+import Report from "./Report.jsx";
+import { MapPinMarker, MapPinGrey } from "./MapPins.jsx";
+import { BrandLogoLink } from "./BrandLogo.jsx";
 
 function HeroMapCard() {
   return (
@@ -104,7 +60,7 @@ function HeroMapCard() {
             <span className="score-pill__sep"> / </span>
             <span className="score-pill__max">100</span>
           </span>
-          <span className="score-pill__lbl">Score Mie</span>
+          <span className="score-pill__lbl">Score BloomSpot</span>
         </div>
       </div>
 
@@ -241,12 +197,32 @@ function SectionMapIllustration() {
 
 export default function App() {
   const [flow, setFlow] = useState("landing");
+  const [reportData, setReportData] = useState(null);
+
+  if (flow === "report" && reportData) {
+    return (
+      <Report
+        data={reportData}
+        onHome={() => {
+          setReportData(null);
+          setFlow("landing");
+        }}
+        onAffiner={() => {
+          setReportData(null);
+          setFlow("questionnaire");
+        }}
+      />
+    );
+  }
 
   if (flow === "questionnaire") {
     return (
       <Questionnaire
         onCancel={() => setFlow("landing")}
-        onComplete={() => setFlow("landing")}
+        onComplete={(payload) => {
+          setReportData(payload);
+          setFlow("report");
+        }}
       />
     );
   }
@@ -258,7 +234,7 @@ export default function App() {
         <div className="hero__overlay" role="presentation" />
 
         <nav className="nav">
-          <Logo />
+          <BrandLogoLink />
           <div className="nav__pill">
             <a href="#methode">La méthode</a>
             <a href="#carte">La carte</a>
@@ -284,7 +260,7 @@ export default function App() {
               <span className="hero__title-accent">Trouvez le secteur.</span>
             </h1>
             <p className="hero__lead">
-              Mie aide à choisir où ouvrir votre boulangerie : concurrence, flux piétons, typologie du
+              BloomSpot aide à choisir où ouvrir votre boulangerie : concurrence, flux piétons, typologie du
               quartier et locaux disponibles — synthétisés dans un rapport clair.
             </p>
             <button type="button" className="btn btn--hero" onClick={() => setFlow("questionnaire")}>
