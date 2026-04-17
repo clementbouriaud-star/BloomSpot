@@ -1,3 +1,6 @@
+import { useState } from "react";
+import Questionnaire from "./Questionnaire.jsx";
+
 function Logo() {
   return (
     <a href="#" className="brand" aria-label="Mie. accueil">
@@ -237,6 +240,17 @@ function SectionMapIllustration() {
 }
 
 export default function App() {
+  const [flow, setFlow] = useState("landing");
+
+  if (flow === "questionnaire") {
+    return (
+      <Questionnaire
+        onCancel={() => setFlow("landing")}
+        onComplete={() => setFlow("landing")}
+      />
+    );
+  }
+
   return (
     <div className="page">
       <header className="hero">
@@ -273,9 +287,9 @@ export default function App() {
               Mie aide à choisir où ouvrir votre boulangerie : concurrence, flux piétons, typologie du
               quartier et locaux disponibles — synthétisés dans un rapport clair.
             </p>
-            <a href="#recherche" className="btn btn--hero">
+            <button type="button" className="btn btn--hero" onClick={() => setFlow("questionnaire")}>
               Lancer une recherche
-            </a>
+            </button>
           </div>
           <div className="hero__aside">
             <HeroMapCard />
