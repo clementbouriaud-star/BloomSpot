@@ -154,6 +154,7 @@ export default function Report({ data, onHome, onAffiner }) {
   const [selectedId, setSelectedId] = useState("A");
 
   const headline = useMemo(() => {
+    if (data?.reportTitle) return data.reportTitle;
     const ville = (data?.ville || "Paris").trim() || "Paris";
     const concept = CONCEPT_TITLES[data?.concept] || "Boulangerie artisan";
     return `${ville} — ${concept}`;

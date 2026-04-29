@@ -3,6 +3,14 @@ import Questionnaire from "./Questionnaire.jsx";
 import Report from "./Report.jsx";
 import { MapPinMarker, MapPinGrey } from "./MapPins.jsx";
 import { BrandLogoLink } from "./BrandLogo.jsx";
+import { saveQuestionnaire, saveReport } from "./lib/supabaseApi";
+
+const CONCEPT_TITLES = {
+  tradition: "Boulangerie de tradition",
+  auteur: "Boulangerie artisan",
+  bio: "Boulangerie engagée",
+  snacking: "Snacking & coffee",
+};
 
 function HeroMapCard() {
   return (
@@ -219,8 +227,28 @@ export default function App() {
     return (
       <Questionnaire
         onCancel={() => setFlow("landing")}
-        onComplete={(payload) => {
-          setReportData(payload);
+        onComplete={async (payload) => {
+          const reportTitle = `${payload.ville || "Paris"} — ${CONCEPT_TITLES[payload.concept] || "Boulangerie artisan"}`;
+          const nextReportData = { ...payload, reportTitle };
+
+          try {
+            const questionnaire = await saveQuestionnaire(payload);
+            const report = await saveReport({
+              questionnaireId: questionnaire.id,
+              title: reportTitle,
+              payload: nextReportData,
+            });
+
+            nextReportData.db = {
+              questionnaireId: questionnaire.id,
+              reportId: report.id,
+            };
+          } catch (error) {
+            // Keep UX unblocked in case schema/policies are not ready yet.
+            console.warn("Supabase persistence failed.", error);
+          }
+
+          setReportData(nextReportData);
           setFlow("report");
         }}
       />

@@ -88,6 +88,8 @@ export default function Questionnaire({ onCancel, onComplete }) {
   const [concept, setConcept] = useState(null);
   const [clientele, setClientele] = useState(null);
   const [atouts, setAtouts] = useState(() => new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const phase = STEPS[step].phase;
   const progress = ((step + 1) / TOTAL) * 100;
@@ -101,9 +103,24 @@ export default function Questionnaire({ onCancel, onComplete }) {
     return true;
   };
 
-  const goNext = () => {
-    if (step < TOTAL - 1) setStep((s) => s + 1);
-    else onComplete?.({ ville, surface, loyer, concept, clientele, atouts: [...atouts] });
+  const goNext = async () => {
+    if (step < TOTAL - 1) {
+      setStep((s) => s + 1);
+      return;
+    }
+
+    if (!onComplete) return;
+
+    setSubmitError("");
+    setIsSubmitting(true);
+    try {
+      await onComplete({ ville, surface, loyer, concept, clientele, atouts: [...atouts] });
+    } catch (error) {
+      console.error(error);
+      setSubmitError("Impossible d'enregistrer pour l'instant. Réessayez.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const goBack = () => {
@@ -295,19 +312,20 @@ export default function Questionnaire({ onCancel, onComplete }) {
               ← Retour
             </button>
             <div className="quiz-card__footer-right">
+              {submitError ? <span className="quiz-error">{submitError}</span> : null}
               <button type="button" className="quiz-link" onClick={onCancel}>
                 Annuler
               </button>
               {step < TOTAL - 1 ? (
-                <button type="button" className="btn btn--quiz" onClick={goNext} disabled={!canContinue()}>
+                <button type="button" className="btn btn--quiz" onClick={goNext} disabled={!canContinue() || isSubmitting}>
                   Continuer
                   <span className="btn__arrow" aria-hidden>
                     →
                   </span>
                 </button>
               ) : (
-                <button type="button" className="btn btn--quiz" onClick={goNext} disabled={!canContinue()}>
-                  Lancer la recherche
+                <button type="button" className="btn btn--quiz" onClick={goNext} disabled={!canContinue() || isSubmitting}>
+                  {isSubmitting ? "Enregistrement..." : "Lancer la recherche"}
                   <span className="btn__arrow" aria-hidden>
                     →
                   </span>
