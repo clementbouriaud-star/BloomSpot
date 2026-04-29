@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # LocalIQ — Plateforme d'aide à l'implantation commerciale
 
 > Projet Hackathon — stack 100% gratuite, zéro coût API
@@ -404,3 +405,7 @@ Ces features nécessitent du backend — à faire seulement si tout le reste est
 ---
 
 *Bon hackathon 🚀*
+=======
+## BloomSpot - SaaS de positionnement pour les petits commerçants et artisans
+Prototype créé à l'occasion de l'INNOVNIGHT, hackathon de 13h organisé par l'IP Paris à l'école Télécom.
+>>>>>>> 363a24eb8a643bbebdee7608ffc1d0eb71a4d1cf
