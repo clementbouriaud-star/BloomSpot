@@ -150,7 +150,7 @@ function TypoBar({ label, value, tone }) {
   );
 }
 
-export default function Report({ data, onHome, onAffiner }) {
+export default function Report({ data, onHome, onAffiner, session, onAuthOpen, onLogout }) {
   const [selectedId, setSelectedId] = useState("A");
 
   const headline = useMemo(() => {
@@ -178,7 +178,15 @@ export default function Report({ data, onHome, onAffiner }) {
           </button>
         </div>
         <div className="nav__actions">
-          <span className="nav__link report-page__muted">Connexion</span>
+          {session?.user ? (
+            <button type="button" className="nav__link nav__link-btn report-page__muted" onClick={onLogout}>
+              Déconnexion
+            </button>
+          ) : (
+            <button type="button" className="nav__link nav__link-btn report-page__muted" onClick={onAuthOpen}>
+              Connexion
+            </button>
+          )}
           <button type="button" className="btn btn--dark btn--sm">
             Démarrer
             <span className="btn__arrow" aria-hidden>

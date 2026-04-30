@@ -80,7 +80,7 @@ function RadioDecor({ checked = false }) {
   );
 }
 
-export default function Questionnaire({ onCancel, onComplete }) {
+export default function Questionnaire({ onCancel, onComplete, session, onAuthOpen, onLogout }) {
   const [step, setStep] = useState(0);
   const [ville, setVille] = useState("");
   const [surface, setSurface] = useState(null);
@@ -153,7 +153,15 @@ export default function Questionnaire({ onCancel, onComplete }) {
           </button>
         </div>
         <div className="nav__actions">
-          <span className="nav__link quiz__muted-link">Connexion</span>
+          {session?.user ? (
+            <button type="button" className="nav__link nav__link-btn quiz__muted-link" onClick={onLogout}>
+              Déconnexion
+            </button>
+          ) : (
+            <button type="button" className="nav__link nav__link-btn quiz__muted-link" onClick={onAuthOpen}>
+              Connexion
+            </button>
+          )}
           <button type="button" className="btn btn--dark btn--sm">
             Démarrer
             <span className="btn__arrow" aria-hidden>

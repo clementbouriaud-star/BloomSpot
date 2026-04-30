@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Questionnaire from "./Questionnaire.jsx";
 import Report from "./Report.jsx";
 import { MapPinMarker, MapPinGrey } from "./MapPins.jsx";
 import { BrandLogoLink } from "./BrandLogo.jsx";
 import { saveQuestionnaire, saveReport } from "./lib/supabaseApi";
+import AuthModal from "./AuthModal.jsx";
+import { getCurrentSession, onAuthChange, signOutAuth } from "./lib/supabaseAuth";
 
 const CONCEPT_TITLES = {
   tradition: "Boulangerie de tradition",
@@ -206,15 +208,43 @@ function SectionMapIllustration() {
 export default function App() {
   const [flow, setFlow] = useState("landing");
   const [reportData, setReportData] = useState(null);
+  const [session, setSession] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    getCurrentSession()
+      .then((nextSession) => {
+        if (mounted) setSession(nextSession);
+      })
+      .catch((error) => console.warn("Unable to read current session.", error));
+
+    const { data } = onAuthChange((nextSession) => setSession(nextSession));
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOutAuth();
+    } catch (error) {
+      console.warn("Logout failed.", error);
+    }
+  };
 
   if (flow === "report" && reportData) {
     return (
       <Report
         data={reportData}
+        session={session}
         onHome={() => {
           setReportData(null);
           setFlow("landing");
         }}
+        onAuthOpen={() => setShowAuthModal(true)}
+        onLogout={handleLogout}
         onAffiner={() => {
           setReportData(null);
           setFlow("questionnaire");
@@ -226,7 +256,10 @@ export default function App() {
   if (flow === "questionnaire") {
     return (
       <Questionnaire
+        session={session}
         onCancel={() => setFlow("landing")}
+        onAuthOpen={() => setShowAuthModal(true)}
+        onLogout={handleLogout}
         onComplete={async (payload) => {
           const reportTitle = `${payload.ville || "Paris"} — ${CONCEPT_TITLES[payload.concept] || "Boulangerie artisan"}`;
           const nextReportData = { ...payload, reportTitle };
@@ -269,9 +302,15 @@ export default function App() {
             <a href="#tarifs">Tarifs</a>
           </div>
           <div className="nav__actions">
-            <a href="#connexion" className="nav__link">
-              Connexion
-            </a>
+            {session?.user ? (
+              <button type="button" className="nav__link nav__link-btn" onClick={handleLogout}>
+                Déconnexion
+              </button>
+            ) : (
+              <button type="button" className="nav__link nav__link-btn" onClick={() => setShowAuthModal(true)}>
+                Connexion
+              </button>
+            )}
             <a href="#demarrer" className="btn btn--dark btn--sm">
               Démarrer
               <span className="btn__arrow" aria-hidden>
@@ -346,6 +385,7 @@ export default function App() {
           </div>
         </div>
       </section>
+      {showAuthModal ? <AuthModal onClose={() => setShowAuthModal(false)} /> : null}
     </div>
   );
 }
