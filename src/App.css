@@ -88,7 +88,7 @@ a {
 
 .nav {
   position: relative;
-  z-index: 2;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -145,6 +145,230 @@ a {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.account-menu {
+  position: relative;
+  z-index: 40;
+}
+
+.account-panel {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  width: min(92vw, 420px);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.14);
+  padding: 0.85rem;
+  z-index: 60;
+}
+
+.account-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.account-panel__title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.account-panel__close {
+  border: none;
+  background: transparent;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: #8f8f8f;
+  cursor: pointer;
+}
+
+.account-panel__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.account-panel__tab {
+  border: 1px solid #e3e0d9;
+  border-radius: 999px;
+  background: #faf8f4;
+  padding: 0.5rem 0.65rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.account-panel__tab--active {
+  border-color: #c45a3c;
+  background: #fff2ee;
+}
+
+.account-panel__body {
+  max-height: min(62vh, 460px);
+  overflow-y: auto;
+  padding-right: 0.1rem;
+}
+
+.account-panel__empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--grey-500);
+}
+
+.search-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.search-history__item {
+  border: 1px solid #ece8e0;
+  border-radius: 12px;
+  background: #fbfaf7;
+  padding: 0.7rem 0.75rem;
+}
+
+.search-history__title {
+  margin: 0 0 0.25rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.search-history__line {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--grey-500);
+}
+
+.search-history__date {
+  margin: 0.35rem 0 0.55rem;
+  font-size: 0.72rem;
+  color: var(--grey-400);
+}
+
+.search-history__open {
+  border: none;
+  border-radius: 999px;
+  background: #161616;
+  color: #fff;
+  padding: 0.48rem 0.8rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.account-panel__setting-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--grey-400);
+}
+
+.account-panel__setting-value {
+  margin: 0 0 0.8rem;
+  font-size: 0.84rem;
+  color: var(--black);
+  word-break: break-word;
+}
+
+.account-panel__setting-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.settings-section {
+  border: 1px solid #ece8df;
+  border-radius: 12px;
+  background: #faf8f3;
+  padding: 0.7rem;
+  margin-bottom: 0.65rem;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.55rem;
+}
+
+.settings-field span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #3b3b3b;
+}
+
+.settings-field input,
+.settings-field select {
+  border: 1px solid #ddd8cf;
+  border-radius: 9px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 0.46rem 0.52rem;
+}
+
+.settings-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.45rem 0;
+  font-size: 0.78rem;
+  color: var(--grey-500);
+}
+
+.settings-toggle input {
+  margin-top: 0.05rem;
+}
+
+.settings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.settings-btn {
+  border: 1px solid #d8d2c7;
+  border-radius: 999px;
+  background: #fff;
+  color: #2b2b2b;
+  padding: 0.5rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.settings-btn--ghost:hover {
+  background: #f4f1ea;
+}
+
+.settings-btn--danger {
+  border-color: #e6c2bc;
+  color: #a74235;
+  background: #fff5f2;
+}
+
+.settings-btn--danger:hover {
+  background: #feece7;
+}
+
+.settings-notice {
+  margin: 0.5rem 0 0;
+  font-size: 0.76rem;
+  color: #2f5d45;
 }
 
 .nav__link {
@@ -1412,13 +1636,14 @@ a {
 
 .btn--quiz:not(:disabled) {
   cursor: pointer;
-  background: #e6b3a8;
+  background: #c45a3c;
   color: var(--white);
+  box-shadow: 0 10px 24px rgba(166, 68, 52, 0.24);
 }
 
 .btn--quiz:hover:not(:disabled) {
-  filter: brightness(0.97);
-  box-shadow: 0 8px 22px rgba(166, 68, 52, 0.12);
+  filter: brightness(0.94);
+  box-shadow: 0 10px 24px rgba(166, 68, 52, 0.3);
 }
 
 .btn--quiz:disabled {

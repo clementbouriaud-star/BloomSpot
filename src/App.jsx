@@ -14,6 +14,285 @@ const CONCEPT_TITLES = {
   snacking: "Snacking & coffee",
 };
 
+const CLIENTELE_TITLES = {
+  familles: "Familles",
+  bureaux: "Actifs en bureau",
+  etudiants: "Étudiants",
+  touristes: "Touristes & passage",
+  seniors: "Seniors",
+  csp: "CSP+ exigeants",
+};
+
+const HISTORY_STORAGE_KEY = "bloomspot-search-history-v1";
+const SETTINGS_STORAGE_KEY = "bloomspot-account-settings-v1";
+
+const DEFAULT_SETTINGS = {
+  defaultCity: "",
+  defaultClientele: "familles",
+  emailAlerts: true,
+  weeklyDigest: false,
+};
+
+function readHistoryStorage() {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((entry) => entry && entry.id && entry.reportData);
+  } catch (error) {
+    console.warn("Unable to read search history.", error);
+    return [];
+  }
+}
+
+function writeHistoryStorage(history) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+  } catch (error) {
+    console.warn("Unable to save search history.", error);
+  }
+}
+
+function readSettingsStorage() {
+  if (typeof window === "undefined") return DEFAULT_SETTINGS;
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return DEFAULT_SETTINGS;
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_SETTINGS,
+      ...(parsed && typeof parsed === "object" ? parsed : {}),
+    };
+  } catch (error) {
+    console.warn("Unable to read account settings.", error);
+    return DEFAULT_SETTINGS;
+  }
+}
+
+function writeSettingsStorage(settings) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch (error) {
+    console.warn("Unable to save account settings.", error);
+  }
+}
+
+function exportSearchHistory(history) {
+  if (typeof window === "undefined") return;
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    total: history.length,
+    searches: history,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `bloomspot-recherches-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function formatHistoryDate(isoString) {
+  if (!isoString) return "Date inconnue";
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "Date inconnue";
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function buildSearchSummary(payload) {
+  return {
+    ville: payload.ville || "Secteur non précisé",
+    conceptLabel: CONCEPT_TITLES[payload.concept] || "Concept non précisé",
+    clienteleLabel: CLIENTELE_TITLES[payload.clientele] || "Clientèle non précisée",
+    surface: payload.surface || "Surface non précisée",
+    loyer: payload.loyer || "Budget non précisé",
+  };
+}
+
+function AccountMenu({ session, searchHistory, onAuthOpen, onLogout, onOpenSearch, onClearHistory, onExportHistory }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("searches");
+  const [settings, setSettings] = useState(() => readSettingsStorage());
+  const [settingsNotice, setSettingsNotice] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) setActiveTab("searches");
+  }, [isOpen]);
+
+  const updateSetting = (key, value) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+    setSettingsNotice("");
+  };
+
+  const saveSettings = () => {
+    writeSettingsStorage(settings);
+    setSettingsNotice("Préférences enregistrées.");
+  };
+
+  const accountLabel = session?.user?.email || "Compte invité";
+
+  return (
+    <div className="account-menu">
+      <button type="button" className="btn btn--dark btn--sm" onClick={() => setIsOpen((prev) => !prev)}>
+        Mon compte
+      </button>
+      {isOpen ? (
+        <div className="account-panel" role="dialog" aria-label="Mon compte">
+          <div className="account-panel__head">
+            <p className="account-panel__title">Mon compte</p>
+            <button type="button" className="account-panel__close" onClick={() => setIsOpen(false)} aria-label="Fermer">
+              ×
+            </button>
+          </div>
+          <div className="account-panel__tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              className={`account-panel__tab ${activeTab === "searches" ? "account-panel__tab--active" : ""}`}
+              onClick={() => setActiveTab("searches")}
+              aria-selected={activeTab === "searches"}
+            >
+              Mes recherches
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className={`account-panel__tab ${activeTab === "settings" ? "account-panel__tab--active" : ""}`}
+              onClick={() => setActiveTab("settings")}
+              aria-selected={activeTab === "settings"}
+            >
+              Paramètres
+            </button>
+          </div>
+
+          {activeTab === "searches" ? (
+            <div className="account-panel__body">
+              {searchHistory.length === 0 ? (
+                <p className="account-panel__empty">Aucune recherche enregistrée pour le moment.</p>
+              ) : (
+                <ul className="search-history">
+                  {searchHistory.map((entry) => (
+                    <li key={entry.id} className="search-history__item">
+                      <div className="search-history__meta">
+                        <p className="search-history__title">{entry.summary.ville}</p>
+                        <p className="search-history__line">
+                          {entry.summary.conceptLabel} · {entry.summary.clienteleLabel}
+                        </p>
+                        <p className="search-history__line">
+                          {entry.summary.surface} · {entry.summary.loyer}
+                        </p>
+                        <p className="search-history__date">{formatHistoryDate(entry.createdAt)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="search-history__open"
+                        onClick={() => {
+                          onOpenSearch(entry);
+                          setIsOpen(false);
+                        }}
+                      >
+                        Revenir à cette recherche
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <div className="account-panel__body">
+              <div className="settings-section">
+                <p className="account-panel__setting-label">Session</p>
+                <p className="account-panel__setting-value">{accountLabel}</p>
+              </div>
+
+              <div className="settings-section">
+                <p className="account-panel__setting-label">Préférences de recherche</p>
+                <label className="settings-field">
+                  <span>Ville par défaut</span>
+                  <input
+                    type="text"
+                    value={settings.defaultCity}
+                    onChange={(event) => updateSetting("defaultCity", event.target.value)}
+                    placeholder="Ex: Paris 11e"
+                  />
+                </label>
+                <label className="settings-field">
+                  <span>Clientèle prioritaire</span>
+                  <select
+                    value={settings.defaultClientele}
+                    onChange={(event) => updateSetting("defaultClientele", event.target.value)}
+                  >
+                    {Object.entries(CLIENTELE_TITLES).map(([id, label]) => (
+                      <option key={id} value={id}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="settings-toggle">
+                  <input
+                    type="checkbox"
+                    checked={settings.emailAlerts}
+                    onChange={(event) => updateSetting("emailAlerts", event.target.checked)}
+                  />
+                  <span>Alertes email quand de nouveaux locaux correspondent</span>
+                </label>
+                <label className="settings-toggle">
+                  <input
+                    type="checkbox"
+                    checked={settings.weeklyDigest}
+                    onChange={(event) => updateSetting("weeklyDigest", event.target.checked)}
+                  />
+                  <span>Recevoir un digest hebdomadaire du marché</span>
+                </label>
+                <button type="button" className="btn btn--dark account-panel__setting-btn" onClick={saveSettings}>
+                  Enregistrer les préférences
+                </button>
+                {settingsNotice ? <p className="settings-notice">{settingsNotice}</p> : null}
+              </div>
+
+              <div className="settings-section">
+                <p className="account-panel__setting-label">Données</p>
+                <div className="settings-actions">
+                  <button type="button" className="settings-btn settings-btn--ghost" onClick={onExportHistory}>
+                    Exporter mes recherches (JSON)
+                  </button>
+                  <button type="button" className="settings-btn settings-btn--danger" onClick={onClearHistory}>
+                    Vider l&apos;historique ({searchHistory.length})
+                  </button>
+                </div>
+              </div>
+
+              {session?.user ? (
+                <button type="button" className="btn btn--dark account-panel__setting-btn" onClick={onLogout}>
+                  Déconnexion
+                </button>
+              ) : (
+                <button type="button" className="btn btn--dark account-panel__setting-btn" onClick={onAuthOpen}>
+                  Connexion
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function HeroMapCard() {
   return (
     <div className="report-card">
@@ -210,6 +489,11 @@ export default function App() {
   const [reportData, setReportData] = useState(null);
   const [session, setSession] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [searchHistory, setSearchHistory] = useState(() => readHistoryStorage());
+
+  useEffect(() => {
+    writeHistoryStorage(searchHistory);
+  }, [searchHistory]);
 
   useEffect(() => {
     let mounted = true;
@@ -234,11 +518,30 @@ export default function App() {
     }
   };
 
+  const openSavedSearch = (entry) => {
+    if (!entry?.reportData) return;
+    setReportData(entry.reportData);
+    setFlow("report");
+  };
+
+  const accountMenu = (
+    <AccountMenu
+      session={session}
+      searchHistory={searchHistory}
+      onAuthOpen={() => setShowAuthModal(true)}
+      onLogout={handleLogout}
+      onOpenSearch={openSavedSearch}
+      onClearHistory={() => setSearchHistory([])}
+      onExportHistory={() => exportSearchHistory(searchHistory)}
+    />
+  );
+
   if (flow === "report" && reportData) {
     return (
       <Report
         data={reportData}
         session={session}
+        accountMenu={accountMenu}
         onHome={() => {
           setReportData(null);
           setFlow("landing");
@@ -257,6 +560,7 @@ export default function App() {
     return (
       <Questionnaire
         session={session}
+        accountMenu={accountMenu}
         onCancel={() => setFlow("landing")}
         onAuthOpen={() => setShowAuthModal(true)}
         onLogout={handleLogout}
@@ -283,6 +587,15 @@ export default function App() {
 
           setReportData(nextReportData);
           setFlow("report");
+          setSearchHistory((prev) => {
+            const nextEntry = {
+              id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+              createdAt: new Date().toISOString(),
+              summary: buildSearchSummary(payload),
+              reportData: nextReportData,
+            };
+            return [nextEntry, ...prev].slice(0, 20);
+          });
         }}
       />
     );
@@ -311,12 +624,7 @@ export default function App() {
                 Connexion
               </button>
             )}
-            <a href="#demarrer" className="btn btn--dark btn--sm">
-              Démarrer
-              <span className="btn__arrow" aria-hidden>
-                →
-              </span>
-            </a>
+            {accountMenu}
           </div>
         </nav>
 

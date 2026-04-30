@@ -150,7 +150,7 @@ function TypoBar({ label, value, tone }) {
   );
 }
 
-export default function Report({ data, onHome, onAffiner, session, onAuthOpen, onLogout }) {
+export default function Report({ data, onHome, onAffiner, session, onAuthOpen, onLogout, accountMenu }) {
   const [selectedId, setSelectedId] = useState("A");
 
   const headline = useMemo(() => {
@@ -187,12 +187,7 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
               Connexion
             </button>
           )}
-          <button type="button" className="btn btn--dark btn--sm">
-            Démarrer
-            <span className="btn__arrow" aria-hidden>
-              →
-            </span>
-          </button>
+          {accountMenu}
         </div>
       </nav>
 
