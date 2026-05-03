@@ -1707,6 +1707,38 @@ a {
   color: var(--grey-500);
 }
 
+.market-context {
+  margin-top: 0.9rem;
+  display: inline-block;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #e7ddd0;
+  border-radius: 12px;
+  background: #fffdf9;
+}
+
+.market-context__label {
+  margin: 0 0 0.25rem;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8d6f4f;
+}
+
+.market-context__value {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2f5d45;
+}
+
+.market-context__meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--grey-500);
+}
+
 .report-hero__actions {
   display: flex;
   flex-wrap: wrap;

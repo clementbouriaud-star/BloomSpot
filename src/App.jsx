@@ -3,7 +3,7 @@ import Questionnaire from "./Questionnaire.jsx";
 import Report from "./Report.jsx";
 import { MapPinMarker, MapPinGrey } from "./MapPins.jsx";
 import { BrandLogoLink } from "./BrandLogo.jsx";
-import { saveQuestionnaire, saveReport } from "./lib/supabaseApi";
+import { getImmoPriceContext, saveQuestionnaire, saveReport } from "./lib/supabaseApi";
 import AuthModal from "./AuthModal.jsx";
 import { getCurrentSession, onAuthChange, signOutAuth } from "./lib/supabaseAuth";
 
@@ -567,6 +567,15 @@ export default function App() {
         onComplete={async (payload) => {
           const reportTitle = `${payload.ville || "Paris"} — ${CONCEPT_TITLES[payload.concept] || "Boulangerie artisan"}`;
           const nextReportData = { ...payload, reportTitle };
+
+          try {
+            const immoPriceContext = await getImmoPriceContext(payload.ville);
+            if (immoPriceContext) {
+              nextReportData.marketPrice = immoPriceContext;
+            }
+          } catch (error) {
+            console.warn("Unable to load immobilier price context.", error);
+          }
 
           try {
             const questionnaire = await saveQuestionnaire(payload);

@@ -161,6 +161,9 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
   }, [data]);
 
   const active = LOCAUX.find((l) => l.id === selectedId) || LOCAUX[0];
+  const marketPriceValue = data?.marketPrice?.averagePrice;
+  const hasMarketPrice = typeof marketPriceValue === "number" && Number.isFinite(marketPriceValue);
+  const marketPriceText = hasMarketPrice ? `${Math.round(marketPriceValue).toLocaleString("fr-FR")} €/m²` : "Non disponible";
 
   return (
     <div className="report-page">
@@ -196,6 +199,20 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
           <p className="report-hero__eyebrow">Rapport d&apos;implantation</p>
           <h1 className="report-hero__title">{headline}</h1>
           <p className="report-hero__sub">3 locaux compatibles · Mise à jour il y a 2 minutes</p>
+          <div className="market-context">
+            <p className="market-context__label">Prix immobiliers département</p>
+            <p className="market-context__value">{marketPriceText}</p>
+            {data?.marketPrice ? (
+              <p className="market-context__meta">
+                {data.marketPrice.departmentName || "Département inconnu"}
+                {data.marketPrice.departmentCode ? ` (${data.marketPrice.departmentCode})` : ""}
+                {" · source "}
+                {data.marketPrice.sourceTable}
+              </p>
+            ) : (
+              <p className="market-context__meta">Aucune donnée trouvée pour cette ville dans la table Supabase.</p>
+            )}
+          </div>
         </div>
         <div className="report-hero__actions">
           <button type="button" className="btn btn--outline-report">

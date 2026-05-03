@@ -8,6 +8,7 @@ Ce projet est maintenu pour un utilisateur non technique.
 - Ne pas attendre une confirmation supplémentaire du type "tu peux coder".
 - Limiter les explications longues avant action; privilégier l'exécution.
 - Poser une question uniquement si une information est bloquante.
+-proposer les ajustements nécessaires sur supabase lorsque c'est pertinent
 
 ## Style attendu
 
