@@ -147,6 +147,44 @@ a {
   gap: 1rem;
 }
 
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  gap: 0.15rem;
+}
+
+.lang-toggle__btn {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--grey-500);
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.lang-toggle__btn:hover {
+  color: var(--black);
+}
+
+.lang-toggle__btn--active {
+  background: var(--black);
+  color: var(--white);
+}
+
+.lang-toggle__btn--active:hover {
+  color: var(--white);
+}
+
 .account-menu {
   position: relative;
   z-index: 40;

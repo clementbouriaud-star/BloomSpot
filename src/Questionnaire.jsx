@@ -1,62 +1,15 @@
 import { useState } from "react";
 import { BrandLogoButton } from "./BrandLogo.jsx";
+import { LanguageToggle, useTranslation } from "./lib/i18n.jsx";
 
 const TOTAL = 5;
 
-const STEPS = [
-  { phase: "Ville" },
-  { phase: "Local" },
-  { phase: "Concept" },
-  { phase: "Clientèle" },
-  { phase: "Atouts" },
-];
-
 const SUGGESTIONS = ["Paris 11e", "Lyon Croix-Rousse", "Bordeaux Chartrons", "Nantes Centre", "Lille Vieux-Lille"];
 
-const SURFACES = ["< 50 m²", "50-80 m²", "80-120 m²", "> 120 m²"];
-
-const LOYERS = ["< 2 500 €/mois", "2 500-4 000 €", "4 000-6 000 €", "> 6 000 €"];
-
-const STYLES_BOULANGERIE = [
-  {
-    id: "tradition",
-    title: "Tradition",
-    desc: "Pain quotidien, viennoiseries classiques, prix accessibles",
-  },
-  {
-    id: "auteur",
-    title: "Artisan d'auteur",
-    desc: "Levain, farines anciennes, sélection pointue",
-  },
-  {
-    id: "bio",
-    title: "Bio & engagée",
-    desc: "Filières courtes, vrac, démarche écologique",
-  },
-  {
-    id: "snacking",
-    title: "Snacking & coffee",
-    desc: "Sandwichs, cafés de spécialité, formules midi",
-  },
-];
-
-const CLIENTELES = [
-  { id: "familles", title: "Familles", desc: "Habitat résidentiel, écoles à proximité" },
-  { id: "bureaux", title: "Actifs en bureau", desc: "Déjeuner rapide, click & collect" },
-  { id: "etudiants", title: "Étudiants", desc: "Prix accessibles, formules snacking" },
-  { id: "touristes", title: "Touristes & passage", desc: "Centre-ville, gares, monuments" },
-  { id: "seniors", title: "Seniors", desc: "Habitués, fidélité forte, classiques" },
-  { id: "csp", title: "CSP+ exigeants", desc: "Bio, levain, produits d'exception" },
-];
-
-const ATOUTS = [
-  { id: "flux", title: "Fort flux piéton", desc: "Rue passante, axe commerçant" },
-  { id: "concurrence", title: "Peu de concurrence", desc: "Pas de boulangerie à moins de 300m" },
-  { id: "transports", title: "Proche transports", desc: "Métro, RER, gare à 5 min" },
-  { id: "stationnement", title: "Stationnement aisé", desc: "Place pour la livraison & clients" },
-  { id: "terrasse", title: "Possibilité terrasse", desc: "Trottoir large, exposition" },
-  { id: "mutation", title: "Quartier en mutation", desc: "Nouveaux logements, dynamique" },
-];
+const STYLE_KEYS = ["tradition", "auteur", "bio", "snacking"];
+const CLIENTELE_KEYS = ["familles", "bureaux", "etudiants", "touristes", "seniors", "csp"];
+const ATOUT_KEYS = ["flux", "concurrence", "transports", "stationnement", "terrasse", "mutation"];
+const PHASE_KEYS = ["ville", "local", "concept", "clientele", "atouts"];
 
 function InputPinIcon() {
   return (
@@ -81,17 +34,22 @@ function RadioDecor({ checked = false }) {
 }
 
 export default function Questionnaire({ onCancel, onComplete, session, onAuthOpen, onLogout, accountMenu }) {
+  const { t } = useTranslation();
+  const surfaces = t.quiz.surfaces;
+  const loyers = t.quiz.loyers;
+
   const [step, setStep] = useState(0);
   const [ville, setVille] = useState("");
   const [surface, setSurface] = useState(null);
-  const [loyer, setLoyer] = useState("2 500-4 000 €");
+  const [loyer, setLoyer] = useState(loyers[1]);
   const [concept, setConcept] = useState(null);
   const [clientele, setClientele] = useState(null);
   const [atouts, setAtouts] = useState(() => new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  const phase = STEPS[step].phase;
+  const phaseKey = PHASE_KEYS[step];
+  const phase = t.quiz.phases[phaseKey];
   const progress = ((step + 1) / TOTAL) * 100;
 
   const canContinue = () => {
@@ -117,7 +75,7 @@ export default function Questionnaire({ onCancel, onComplete, session, onAuthOpe
       await onComplete({ ville, surface, loyer, concept, clientele, atouts: [...atouts] });
     } catch (error) {
       console.error(error);
-      setSubmitError("Impossible d'enregistrer pour l'instant. Réessayez.");
+      setSubmitError(t.quiz.submitError);
     } finally {
       setIsSubmitting(false);
     }
@@ -143,23 +101,24 @@ export default function Questionnaire({ onCancel, onComplete, session, onAuthOpe
         <BrandLogoButton onClick={onCancel} />
         <div className="nav__pill">
           <button type="button" className="nav__pill-btn" onClick={onCancel}>
-            La méthode
+            {t.nav.method}
           </button>
           <button type="button" className="nav__pill-btn" onClick={onCancel}>
-            La carte
+            {t.nav.map}
           </button>
           <button type="button" className="nav__pill-btn" onClick={onCancel}>
-            Tarifs
+            {t.nav.pricing}
           </button>
         </div>
         <div className="nav__actions">
+          <LanguageToggle />
           {session?.user ? (
             <button type="button" className="nav__link nav__link-btn quiz__muted-link" onClick={onLogout}>
-              Déconnexion
+              {t.nav.logout}
             </button>
           ) : (
             <button type="button" className="nav__link nav__link-btn quiz__muted-link" onClick={onAuthOpen}>
-              Connexion
+              {t.nav.login}
             </button>
           )}
           {accountMenu}
@@ -168,9 +127,7 @@ export default function Questionnaire({ onCancel, onComplete, session, onAuthOpe
 
       <div className="quiz__progress-wrap">
         <div className="quiz__progress-labels">
-          <span>
-            Étape {step + 1} / {TOTAL}
-          </span>
+          <span>{t.quiz.stepLabel(step + 1, TOTAL)}</span>
           <span>{phase.toUpperCase()}</span>
         </div>
         <div className="quiz__progress-bar" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={TOTAL}>
@@ -182,9 +139,9 @@ export default function Questionnaire({ onCancel, onComplete, session, onAuthOpe
         <div className="quiz-card">
           {step === 0 && (
             <>
-              <h1 className="quiz-card__title">Où cherchez-vous ?</h1>
+              <h1 className="quiz-card__title">{t.quiz.step0Title}</h1>
               <label className="quiz-label" htmlFor="quiz-ville">
-                Ville ou quartier
+                {t.quiz.cityLabel}
               </label>
               <div className="quiz-input-wrap">
                 <InputPinIcon />
@@ -192,13 +149,13 @@ export default function Questionnaire({ onCancel, onComplete, session, onAuthOpe
                   id="quiz-ville"
                   className="quiz-input"
                   type="text"
-                  placeholder="ex. Paris 11e arrondissement"
+                  placeholder={t.quiz.cityPlaceholder}
                   value={ville}
                   onChange={(e) => setVille(e.target.value)}
                   autoComplete="address-level2"
                 />
               </div>
-              <p className="quiz-suggest-label">Suggestions populaires</p>
+              <p className="quiz-suggest-label">{t.quiz.suggestionsLabel}</p>
               <div className="quiz-chips">
                 {SUGGESTIONS.map((s) => (
                   <button key={s} type="button" className="quiz-chip" onClick={() => setVille(s)}>
@@ -211,10 +168,10 @@ export default function Questionnaire({ onCancel, onComplete, session, onAuthOpe
 
           {step === 1 && (
             <>
-              <h1 className="quiz-card__title">Surface & budget</h1>
-              <p className="quiz-section-label">Surface souhaitée</p>
+              <h1 className="quiz-card__title">{t.quiz.step1Title}</h1>
+              <p className="quiz-section-label">{t.quiz.surfaceLabel}</p>
               <div className="quiz-grid2">
-                {SURFACES.map((s) => (
+                {surfaces.map((s) => (
                   <button
                     key={s}
                     type="button"
@@ -225,9 +182,9 @@ export default function Questionnaire({ onCancel, onComplete, session, onAuthOpe
                   </button>
                 ))}
               </div>
-              <p className="quiz-section-label">Budget loyer mensuel</p>
+              <p className="quiz-section-label">{t.quiz.budgetLabel}</p>
               <div className="quiz-grid2">
-                {LOYERS.map((s) => (
+                {loyers.map((s) => (
                   <button
                     key={s}
                     type="button"
@@ -243,16 +200,17 @@ export default function Questionnaire({ onCancel, onComplete, session, onAuthOpe
 
           {step === 2 && (
             <>
-              <h1 className="quiz-card__title quiz-card__title--center">Quel style de boulangerie ?</h1>
+              <h1 className="quiz-card__title quiz-card__title--center">{t.quiz.step2Title}</h1>
               <div className="quiz-grid2 quiz-grid2--gap">
-                {STYLES_BOULANGERIE.map((c) => {
-                  const on = concept === c.id;
+                {STYLE_KEYS.map((key) => {
+                  const c = t.quiz.styles[key];
+                  const on = concept === key;
                   return (
                     <button
-                      key={c.id}
+                      key={key}
                       type="button"
                       className={`quiz-choice ${on ? "quiz-choice--active" : ""}`}
-                      onClick={() => setConcept(c.id)}
+                      onClick={() => setConcept(key)}
                     >
                       <RadioDecor checked={on} />
                       <span className="quiz-choice__title">{c.title}</span>
@@ -266,16 +224,17 @@ export default function Questionnaire({ onCancel, onComplete, session, onAuthOpe
 
           {step === 3 && (
             <>
-              <h1 className="quiz-card__title">À qui vous adressez-vous ?</h1>
+              <h1 className="quiz-card__title">{t.quiz.step3Title}</h1>
               <div className="quiz-grid2 quiz-grid2--clients">
-                {CLIENTELES.map((c) => {
-                  const on = clientele === c.id;
+                {CLIENTELE_KEYS.map((key) => {
+                  const c = t.quiz.clientelesDesc[key];
+                  const on = clientele === key;
                   return (
                     <button
-                      key={c.id}
+                      key={key}
                       type="button"
                       className={`quiz-choice ${on ? "quiz-choice--active" : ""}`}
-                      onClick={() => setClientele(c.id)}
+                      onClick={() => setClientele(key)}
                     >
                       <RadioDecor checked={on} />
                       <span className="quiz-choice__title">{c.title}</span>
@@ -289,16 +248,17 @@ export default function Questionnaire({ onCancel, onComplete, session, onAuthOpe
 
           {step === 4 && (
             <>
-              <h1 className="quiz-card__title">Que recherchez-vous dans le quartier ?</h1>
+              <h1 className="quiz-card__title">{t.quiz.step4Title}</h1>
               <div className="quiz-grid2 quiz-grid2--clients">
-                {ATOUTS.map((c) => {
-                  const on = atouts.has(c.id);
+                {ATOUT_KEYS.map((key) => {
+                  const c = t.quiz.atouts[key];
+                  const on = atouts.has(key);
                   return (
                     <button
-                      key={c.id}
+                      key={key}
                       type="button"
                       className={`quiz-choice ${on ? "quiz-choice--active" : ""}`}
-                      onClick={() => toggleAtout(c.id)}
+                      onClick={() => toggleAtout(key)}
                     >
                       <RadioDecor checked={on} />
                       <span className="quiz-choice__title">{c.title}</span>
@@ -312,23 +272,23 @@ export default function Questionnaire({ onCancel, onComplete, session, onAuthOpe
 
           <footer className="quiz-card__footer">
             <button type="button" className="quiz-link" onClick={goBack}>
-              ← Retour
+              {t.quiz.back}
             </button>
             <div className="quiz-card__footer-right">
               {submitError ? <span className="quiz-error">{submitError}</span> : null}
               <button type="button" className="quiz-link" onClick={onCancel}>
-                Annuler
+                {t.quiz.cancel}
               </button>
               {step < TOTAL - 1 ? (
                 <button type="button" className="btn btn--quiz" onClick={goNext} disabled={!canContinue() || isSubmitting}>
-                  Continuer
+                  {t.quiz.next}
                   <span className="btn__arrow" aria-hidden>
                     →
                   </span>
                 </button>
               ) : (
                 <button type="button" className="btn btn--quiz" onClick={goNext} disabled={!canContinue() || isSubmitting}>
-                  {isSubmitting ? "Enregistrement..." : "Lancer la recherche"}
+                  {isSubmitting ? t.quiz.submitting : t.quiz.submit}
                   <span className="btn__arrow" aria-hidden>
                     →
                   </span>

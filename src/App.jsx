@@ -6,22 +6,7 @@ import { BrandLogoLink } from "./BrandLogo.jsx";
 import { getImmoPriceContext, saveQuestionnaire, saveReport } from "./lib/supabaseApi";
 import AuthModal from "./AuthModal.jsx";
 import { getCurrentSession, onAuthChange, signOutAuth } from "./lib/supabaseAuth";
-
-const CONCEPT_TITLES = {
-  tradition: "Boulangerie de tradition",
-  auteur: "Boulangerie artisan",
-  bio: "Boulangerie engagée",
-  snacking: "Snacking & coffee",
-};
-
-const CLIENTELE_TITLES = {
-  familles: "Familles",
-  bureaux: "Actifs en bureau",
-  etudiants: "Étudiants",
-  touristes: "Touristes & passage",
-  seniors: "Seniors",
-  csp: "CSP+ exigeants",
-};
+import { LanguageToggle, useTranslation } from "./lib/i18n.jsx";
 
 const HISTORY_STORAGE_KEY = "bloomspot-search-history-v1";
 const SETTINGS_STORAGE_KEY = "bloomspot-account-settings-v1";
@@ -99,11 +84,11 @@ function exportSearchHistory(history) {
   URL.revokeObjectURL(url);
 }
 
-function formatHistoryDate(isoString) {
-  if (!isoString) return "Date inconnue";
+function formatHistoryDate(isoString, locale, fallback) {
+  if (!isoString) return fallback;
   const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) return "Date inconnue";
-  return new Intl.DateTimeFormat("fr-FR", {
+  if (Number.isNaN(date.getTime())) return fallback;
+  return new Intl.DateTimeFormat(locale, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -114,15 +99,16 @@ function formatHistoryDate(isoString) {
 
 function buildSearchSummary(payload) {
   return {
-    ville: payload.ville || "Secteur non précisé",
-    conceptLabel: CONCEPT_TITLES[payload.concept] || "Concept non précisé",
-    clienteleLabel: CLIENTELE_TITLES[payload.clientele] || "Clientèle non précisée",
-    surface: payload.surface || "Surface non précisée",
-    loyer: payload.loyer || "Budget non précisé",
+    ville: payload.ville || "",
+    conceptKey: payload.concept || "",
+    clienteleKey: payload.clientele || "",
+    surface: payload.surface || "",
+    loyer: payload.loyer || "",
   };
 }
 
 function AccountMenu({ session, searchHistory, onAuthOpen, onLogout, onOpenSearch, onClearHistory, onExportHistory }) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("searches");
   const [settings, setSettings] = useState(() => readSettingsStorage());
@@ -139,21 +125,21 @@ function AccountMenu({ session, searchHistory, onAuthOpen, onLogout, onOpenSearc
 
   const saveSettings = () => {
     writeSettingsStorage(settings);
-    setSettingsNotice("Préférences enregistrées.");
+    setSettingsNotice(t.account.prefsSaved);
   };
 
-  const accountLabel = session?.user?.email || "Compte invité";
+  const accountLabel = session?.user?.email || t.account.guest;
 
   return (
     <div className="account-menu">
       <button type="button" className="btn btn--dark btn--sm" onClick={() => setIsOpen((prev) => !prev)}>
-        Mon compte
+        {t.account.title}
       </button>
       {isOpen ? (
-        <div className="account-panel" role="dialog" aria-label="Mon compte">
+        <div className="account-panel" role="dialog" aria-label={t.account.title}>
           <div className="account-panel__head">
-            <p className="account-panel__title">Mon compte</p>
-            <button type="button" className="account-panel__close" onClick={() => setIsOpen(false)} aria-label="Fermer">
+            <p className="account-panel__title">{t.account.title}</p>
+            <button type="button" className="account-panel__close" onClick={() => setIsOpen(false)} aria-label={t.account.close}>
               ×
             </button>
           </div>
@@ -165,7 +151,7 @@ function AccountMenu({ session, searchHistory, onAuthOpen, onLogout, onOpenSearc
               onClick={() => setActiveTab("searches")}
               aria-selected={activeTab === "searches"}
             >
-              Mes recherches
+              {t.account.tabSearches}
             </button>
             <button
               type="button"
@@ -174,68 +160,82 @@ function AccountMenu({ session, searchHistory, onAuthOpen, onLogout, onOpenSearc
               onClick={() => setActiveTab("settings")}
               aria-selected={activeTab === "settings"}
             >
-              Paramètres
+              {t.account.tabSettings}
             </button>
           </div>
 
           {activeTab === "searches" ? (
             <div className="account-panel__body">
               {searchHistory.length === 0 ? (
-                <p className="account-panel__empty">Aucune recherche enregistrée pour le moment.</p>
+                <p className="account-panel__empty">{t.account.empty}</p>
               ) : (
                 <ul className="search-history">
-                  {searchHistory.map((entry) => (
-                    <li key={entry.id} className="search-history__item">
-                      <div className="search-history__meta">
-                        <p className="search-history__title">{entry.summary.ville}</p>
-                        <p className="search-history__line">
-                          {entry.summary.conceptLabel} · {entry.summary.clienteleLabel}
-                        </p>
-                        <p className="search-history__line">
-                          {entry.summary.surface} · {entry.summary.loyer}
-                        </p>
-                        <p className="search-history__date">{formatHistoryDate(entry.createdAt)}</p>
-                      </div>
-                      <button
-                        type="button"
-                        className="search-history__open"
-                        onClick={() => {
-                          onOpenSearch(entry);
-                          setIsOpen(false);
-                        }}
-                      >
-                        Revenir à cette recherche
-                      </button>
-                    </li>
-                  ))}
+                  {searchHistory.map((entry) => {
+                    const summary = entry.summary || {};
+                    const villeLabel = summary.ville || t.summaryFallbacks.area;
+                    const conceptLabel = summary.conceptKey
+                      ? t.concepts[summary.conceptKey] || t.summaryFallbacks.concept
+                      : t.summaryFallbacks.concept;
+                    const clienteleLabel = summary.clienteleKey
+                      ? t.clienteles[summary.clienteleKey] || t.summaryFallbacks.clientele
+                      : t.summaryFallbacks.clientele;
+                    const surfaceLabel = summary.surface || t.summaryFallbacks.surface;
+                    const loyerLabel = summary.loyer || t.summaryFallbacks.budget;
+                    return (
+                      <li key={entry.id} className="search-history__item">
+                        <div className="search-history__meta">
+                          <p className="search-history__title">{villeLabel}</p>
+                          <p className="search-history__line">
+                            {conceptLabel} · {clienteleLabel}
+                          </p>
+                          <p className="search-history__line">
+                            {surfaceLabel} · {loyerLabel}
+                          </p>
+                          <p className="search-history__date">
+                            {formatHistoryDate(entry.createdAt, t.dateLocale, t.summaryFallbacks.unknownDate)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="search-history__open"
+                          onClick={() => {
+                            onOpenSearch(entry);
+                            setIsOpen(false);
+                          }}
+                        >
+                          {t.account.reopen}
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
           ) : (
             <div className="account-panel__body">
               <div className="settings-section">
-                <p className="account-panel__setting-label">Session</p>
+                <p className="account-panel__setting-label">{t.account.session}</p>
                 <p className="account-panel__setting-value">{accountLabel}</p>
               </div>
 
               <div className="settings-section">
-                <p className="account-panel__setting-label">Préférences de recherche</p>
+                <p className="account-panel__setting-label">{t.account.preferences}</p>
                 <label className="settings-field">
-                  <span>Ville par défaut</span>
+                  <span>{t.account.defaultCity}</span>
                   <input
                     type="text"
                     value={settings.defaultCity}
                     onChange={(event) => updateSetting("defaultCity", event.target.value)}
-                    placeholder="Ex: Paris 11e"
+                    placeholder={t.account.defaultCityPlaceholder}
                   />
                 </label>
                 <label className="settings-field">
-                  <span>Clientèle prioritaire</span>
+                  <span>{t.account.priorityClientele}</span>
                   <select
                     value={settings.defaultClientele}
                     onChange={(event) => updateSetting("defaultClientele", event.target.value)}
                   >
-                    {Object.entries(CLIENTELE_TITLES).map(([id, label]) => (
+                    {Object.entries(t.clienteles).map(([id, label]) => (
                       <option key={id} value={id}>
                         {label}
                       </option>
@@ -248,7 +248,7 @@ function AccountMenu({ session, searchHistory, onAuthOpen, onLogout, onOpenSearc
                     checked={settings.emailAlerts}
                     onChange={(event) => updateSetting("emailAlerts", event.target.checked)}
                   />
-                  <span>Alertes email quand de nouveaux locaux correspondent</span>
+                  <span>{t.account.emailAlerts}</span>
                 </label>
                 <label className="settings-toggle">
                   <input
@@ -256,33 +256,33 @@ function AccountMenu({ session, searchHistory, onAuthOpen, onLogout, onOpenSearc
                     checked={settings.weeklyDigest}
                     onChange={(event) => updateSetting("weeklyDigest", event.target.checked)}
                   />
-                  <span>Recevoir un digest hebdomadaire du marché</span>
+                  <span>{t.account.weeklyDigest}</span>
                 </label>
                 <button type="button" className="btn btn--dark account-panel__setting-btn" onClick={saveSettings}>
-                  Enregistrer les préférences
+                  {t.account.savePrefs}
                 </button>
                 {settingsNotice ? <p className="settings-notice">{settingsNotice}</p> : null}
               </div>
 
               <div className="settings-section">
-                <p className="account-panel__setting-label">Données</p>
+                <p className="account-panel__setting-label">{t.account.data}</p>
                 <div className="settings-actions">
                   <button type="button" className="settings-btn settings-btn--ghost" onClick={onExportHistory}>
-                    Exporter mes recherches (JSON)
+                    {t.account.exportJson}
                   </button>
                   <button type="button" className="settings-btn settings-btn--danger" onClick={onClearHistory}>
-                    Vider l&apos;historique ({searchHistory.length})
+                    {t.account.clearHistory(searchHistory.length)}
                   </button>
                 </div>
               </div>
 
               {session?.user ? (
                 <button type="button" className="btn btn--dark account-panel__setting-btn" onClick={onLogout}>
-                  Déconnexion
+                  {t.nav.logout}
                 </button>
               ) : (
                 <button type="button" className="btn btn--dark account-panel__setting-btn" onClick={onAuthOpen}>
-                  Connexion
+                  {t.nav.login}
                 </button>
               )}
             </div>
@@ -294,11 +294,12 @@ function AccountMenu({ session, searchHistory, onAuthOpen, onLogout, onOpenSearc
 }
 
 function HeroMapCard() {
+  const { t } = useTranslation();
   return (
     <div className="report-card">
       <div className="report-card__eyebrow">
         <span className="report-card__dot" aria-hidden />
-        Rapport d&apos;implantation
+        {t.hero.eyebrow}
       </div>
 
       <div className="mini-map" aria-hidden>
@@ -314,7 +315,7 @@ function HeroMapCard() {
         <div className="mini-map__road mini-map__road--main-v" />
         <div className="mini-map__road mini-map__road--lane1" />
         <div className="mini-map__road mini-map__road--lane2" />
-        <div className="mini-map__parc">Parc</div>
+        <div className="mini-map__parc">{t.miniMap.park}</div>
 
         <div className="mini-map__subject-wrap">
           <span className="mini-map__pulse" />
@@ -330,18 +331,18 @@ function HeroMapCard() {
         <MapPinGrey className="mini-map__grey mini-map__grey--4" />
 
         <div className="mini-map__tooltip">
-          <span className="mini-map__tooltip-label">Concurrence directe</span>
+          <span className="mini-map__tooltip-label">{t.miniMap.tooltipLabel}</span>
           <span className="mini-map__tooltip-num">3</span>
-          <span className="mini-map__tooltip-sub">à 500 m</span>
+          <span className="mini-map__tooltip-sub">{t.miniMap.tooltipSub}</span>
         </div>
       </div>
 
       <div className="report-card__loc">
         <div>
           <p className="report-card__loc-label">
-            Local recommandé <span className="report-card__loc-sep">•</span> Paris 9e
+            {t.miniMap.recommended} <span className="report-card__loc-sep">•</span> Paris 9e
           </p>
-          <p className="report-card__addr">28 rue des Martyrs</p>
+          <p className="report-card__addr">{t.miniMap.address}</p>
         </div>
         <div className="score-pill">
           <span className="score-pill__line">
@@ -349,7 +350,7 @@ function HeroMapCard() {
             <span className="score-pill__sep"> / </span>
             <span className="score-pill__max">100</span>
           </span>
-          <span className="score-pill__lbl">Score BloomSpot</span>
+          <span className="score-pill__lbl">{t.miniMap.score}</span>
         </div>
       </div>
 
@@ -361,7 +362,7 @@ function HeroMapCard() {
             </span>
             <div>
               <p className="stat-tile__val">4 200</p>
-              <p className="stat-tile__lbl">Habitants 5 min</p>
+              <p className="stat-tile__lbl">{t.miniMap.residents}</p>
             </div>
           </div>
           <div className="stat-tile">
@@ -370,7 +371,7 @@ function HeroMapCard() {
             </span>
             <div>
               <p className="stat-tile__val">+18 %</p>
-              <p className="stat-tile__lbl">Flux week-end</p>
+              <p className="stat-tile__lbl">{t.miniMap.weekendFlux}</p>
             </div>
           </div>
           <div className="stat-tile">
@@ -379,7 +380,7 @@ function HeroMapCard() {
             </span>
             <div>
               <p className="stat-tile__val">3</p>
-              <p className="stat-tile__lbl">Boulangeries 500m</p>
+              <p className="stat-tile__lbl">{t.miniMap.bakeries}</p>
             </div>
           </div>
           <div className="stat-tile">
@@ -388,7 +389,7 @@ function HeroMapCard() {
             </span>
             <div>
               <p className="stat-tile__val">320 €/m²</p>
-              <p className="stat-tile__lbl">Loyer estimé</p>
+              <p className="stat-tile__lbl">{t.miniMap.estimatedRent}</p>
             </div>
           </div>
         </div>
@@ -398,15 +399,15 @@ function HeroMapCard() {
         <div className="report-card__legend">
           <span className="report-card__legend-item">
             <span className="report-card__legend-dot report-card__legend-dot--red" aria-hidden />
-            Local étudié
+            {t.miniMap.legendStudied}
           </span>
           <span className="report-card__legend-item">
             <span className="report-card__legend-dot report-card__legend-dot--green" aria-hidden />
-            Concurrents
+            {t.miniMap.legendCompetitors}
           </span>
         </div>
         <a href="#pistes" className="report-card__more">
-          +8 autres pistes
+          {t.miniMap.moreLeads}
         </a>
       </div>
     </div>
@@ -457,6 +458,7 @@ function IconEuro() {
 }
 
 function SectionMapIllustration() {
+  const { t } = useTranslation();
   return (
     <div className="feature-map" aria-hidden>
       <div className="feature-map__inner">
@@ -469,7 +471,7 @@ function SectionMapIllustration() {
         </div>
         <div className="feature-map__road feature-map__road--h" />
         <div className="feature-map__road feature-map__road--v" />
-        <div className="feature-map__parc">Parc</div>
+        <div className="feature-map__parc">{t.miniMap.park}</div>
         <div className="feature-map__subject-wrap">
           <span className="feature-map__pulse" />
           <MapPinMarker variant="subject" letter="A" />
@@ -485,6 +487,7 @@ function SectionMapIllustration() {
 }
 
 export default function App() {
+  const { t } = useTranslation();
   const [flow, setFlow] = useState("landing");
   const [reportData, setReportData] = useState(null);
   const [session, setSession] = useState(null);
@@ -565,7 +568,8 @@ export default function App() {
         onAuthOpen={() => setShowAuthModal(true)}
         onLogout={handleLogout}
         onComplete={async (payload) => {
-          const reportTitle = `${payload.ville || "Paris"} — ${CONCEPT_TITLES[payload.concept] || "Boulangerie artisan"}`;
+          const conceptLabel = t.concepts[payload.concept] || t.concepts.auteur;
+          const reportTitle = `${payload.ville || "Paris"} — ${conceptLabel}`;
           const nextReportData = { ...payload, reportTitle };
 
           try {
@@ -590,7 +594,6 @@ export default function App() {
               reportId: report.id,
             };
           } catch (error) {
-            // Keep UX unblocked in case schema/policies are not ready yet.
             console.warn("Supabase persistence failed.", error);
           }
 
@@ -619,18 +622,19 @@ export default function App() {
         <nav className="nav">
           <BrandLogoLink />
           <div className="nav__pill">
-            <a href="#methode">La méthode</a>
-            <a href="#carte">La carte</a>
-            <a href="#tarifs">Tarifs</a>
+            <a href="#methode">{t.nav.method}</a>
+            <a href="#carte">{t.nav.map}</a>
+            <a href="#tarifs">{t.nav.pricing}</a>
           </div>
           <div className="nav__actions">
+            <LanguageToggle />
             {session?.user ? (
               <button type="button" className="nav__link nav__link-btn" onClick={handleLogout}>
-                Déconnexion
+                {t.nav.logout}
               </button>
             ) : (
               <button type="button" className="nav__link nav__link-btn" onClick={() => setShowAuthModal(true)}>
-                Connexion
+                {t.nav.login}
               </button>
             )}
             {accountMenu}
@@ -640,15 +644,12 @@ export default function App() {
         <div className="hero__layout">
           <div className="hero__copy">
             <h1 className="hero__title">
-              Trouvez l&apos;endroit.
-              <span className="hero__title-accent">Trouvez le secteur.</span>
+              {t.hero.titleLine1}
+              <span className="hero__title-accent">{t.hero.titleLine2}</span>
             </h1>
-            <p className="hero__lead">
-              BloomSpot aide à choisir où ouvrir votre boulangerie : concurrence, flux piétons, typologie du
-              quartier et locaux disponibles — synthétisés dans un rapport clair.
-            </p>
+            <p className="hero__lead">{t.hero.lead}</p>
             <button type="button" className="btn btn--hero" onClick={() => setFlow("questionnaire")}>
-              Lancer une recherche
+              {t.hero.cta}
             </button>
           </div>
           <div className="hero__aside">
@@ -658,47 +659,33 @@ export default function App() {
       </header>
 
       <section className="method" id="methode">
-        <p className="eyebrow eyebrow--bronze">Comment ça marche</p>
-        <h2 className="section-title">De l&apos;intuition à la décision, en trois étapes.</h2>
+        <p className="eyebrow eyebrow--bronze">{t.method.eyebrow}</p>
+        <h2 className="section-title">{t.method.title}</h2>
 
         <div className="method__grid">
           <article className="step-card">
             <span className="step-card__num">01</span>
-            <h3 className="step-card__title">Décrivez votre projet</h3>
-            <p className="step-card__text">
-              Surface souhaitée, type de clientèle, style de boulangerie, budget loyer. Un onboarding court
-              de 4 minutes.
-            </p>
+            <h3 className="step-card__title">{t.method.step1Title}</h3>
+            <p className="step-card__text">{t.method.step1Text}</p>
           </article>
           <article className="step-card">
             <span className="step-card__num">02</span>
-            <h3 className="step-card__title">On scanne le terrain</h3>
-            <p className="step-card__text">
-              Concurrence existante, flux piétons, mix démographique, dynamiques commerciales du quartier.
-              Données croisées en temps réel.
-            </p>
+            <h3 className="step-card__title">{t.method.step2Title}</h3>
+            <p className="step-card__text">{t.method.step2Text}</p>
           </article>
           <article className="step-card">
             <span className="step-card__num">03</span>
-            <h3 className="step-card__title">Choisissez en confiance</h3>
-            <p className="step-card__text">
-              Une carte des locaux disponibles classés par compatibilité, avec les forces et faiblesses de
-              chaque rue.
-            </p>
+            <h3 className="step-card__title">{t.method.step3Title}</h3>
+            <p className="step-card__text">{t.method.step3Text}</p>
           </article>
         </div>
 
         <div className="feature" id="carte">
           <SectionMapIllustration />
           <div className="feature__copy">
-            <p className="eyebrow eyebrow--bronze">La carte au cœur</p>
-            <h2 className="section-title">Voyez chaque rue comme un boulanger.</h2>
-            <p className="feature__text">
-              Notre carte interactive croise plus de quarante indicateurs : densité résidentielle, âge médian,
-              présence de bureaux, écoles, transports, concurrence directe et indirecte, saisonnalité
-              touristique. Chaque local est positionné dans son contexte réel — pas seulement sur un plan,
-              mais dans la vie du quartier.
-            </p>
+            <p className="eyebrow eyebrow--bronze">{t.method.featureEyebrow}</p>
+            <h2 className="section-title">{t.method.featureTitle}</h2>
+            <p className="feature__text">{t.method.featureText}</p>
           </div>
         </div>
       </section>

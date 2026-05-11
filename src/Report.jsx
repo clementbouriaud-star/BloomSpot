@@ -1,94 +1,78 @@
 import { useMemo, useState } from "react";
 import { MapPinMarker, MapPinGrey } from "./MapPins.jsx";
 import { BrandLogoButton } from "./BrandLogo.jsx";
+import { LanguageToggle, useTranslation } from "./lib/i18n.jsx";
 
-const CONCEPT_TITLES = {
-  tradition: "Boulangerie de tradition",
-  auteur: "Boulangerie artisan",
-  bio: "Boulangerie engagée",
-  snacking: "Snacking & coffee",
-};
-
-const LOCAUX = [
-  {
-    id: "A",
-    address: "23 rue des Martyrs",
-    quartier: "Paris 9e — SoPi",
-    score: 92,
-    surface: "82 m²",
-    loyer: "4 200 €",
-    loyerDetail: "4 200 €/mois",
-    concur: 1,
-    flux: "Très fort",
-    atouts: [
-      "Rue piétonne très commerçante, flux soutenu de 8h à 20h",
-      "Mix résidentiel CSP+ et touristes de proximité",
-      "1 seule boulangerie concurrente à 280m, gamme classique",
-      "Forte présence de cafés et épiceries fines complémentaires",
-    ],
-    points: ["Loyer dans la fourchette haute du quartier", "Stationnement livraison limité"],
-    typoZone: "Paris 9e — SoPi",
-    typo: [
-      { label: "Familles avec enfants", value: 68, tone: "neutral" },
-      { label: "Pouvoir d'achat (vs moy.)", value: 82, tone: "positive" },
-      { label: "Saturation boulangerie", value: 22, tone: "caution" },
-      { label: "Actifs en bureau", value: 54, tone: "neutral" },
-      { label: "Touristes & passage", value: 41, tone: "neutral" },
-      { label: "Dynamique commerce", value: 75, tone: "positive" },
-    ],
-  },
-  {
-    id: "B",
-    address: "17 rue Notre-Dame de Lorette",
-    quartier: "Paris 9e — Pigalle",
-    score: 84,
-    surface: "65 m²",
-    loyer: "3 600 €",
-    loyerDetail: "3 600 €/mois",
-    concur: 2,
-    flux: "Fort",
-    atouts: [
-      "Axe piéton dense en semaine, bonne visibilité vitrine",
-      "Clientèle de quartier et bureaux à proximité",
-      "Concurrence modérée sur la gamme snacking",
-    ],
-    points: ["Surface plus compacte pour labo + vente", "Livraisons en matinée à anticiper"],
-    typoZone: "Paris 9e — Pigalle",
-    typo: [
-      { label: "Familles avec enfants", value: 52, tone: "neutral" },
-      { label: "Pouvoir d'achat (vs moy.)", value: 76, tone: "positive" },
-      { label: "Saturation boulangerie", value: 38, tone: "caution" },
-      { label: "Actifs en bureau", value: 61, tone: "neutral" },
-      { label: "Touristes & passage", value: 48, tone: "neutral" },
-      { label: "Dynamique commerce", value: 69, tone: "positive" },
-    ],
-  },
-  {
-    id: "C",
-    address: "44 rue du Faubourg Saint-Antoine",
-    quartier: "Paris 12e — Bastille",
-    score: 76,
-    surface: "68 m²",
-    loyer: "2 900 €",
-    loyerDetail: "2 900 €/mois",
-    concur: 3,
-    flux: "Modéré",
-    atouts: [
-      "Quartier mixte commerce / résidentiel",
-      "Bonnes dessertes transports et axes secondaires",
-    ],
-    points: ["Plus de concurrents sur 500m", "Rénovation façade à prévoir"],
-    typoZone: "Paris 12e — Bastille",
-    typo: [
-      { label: "Familles avec enfants", value: 58, tone: "neutral" },
-      { label: "Pouvoir d'achat (vs moy.)", value: 64, tone: "positive" },
-      { label: "Saturation boulangerie", value: 44, tone: "caution" },
-      { label: "Actifs en bureau", value: 49, tone: "neutral" },
-      { label: "Touristes & passage", value: 55, tone: "neutral" },
-      { label: "Dynamique commerce", value: 71, tone: "positive" },
-    ],
-  },
-];
+function buildLocaux(t) {
+  return [
+    {
+      id: "A",
+      address: t.report.addresses.martyrs,
+      quartier: t.report.neighborhoods.sopi,
+      score: 92,
+      surface: "82 m²",
+      loyer: "4 200 €",
+      loyerDetail: "4 200 €/mois",
+      concur: 1,
+      flux: t.report.flux.veryStrong,
+      atouts: t.report.atoutsA,
+      points: t.report.pointsA,
+      typoZone: t.report.neighborhoods.sopi,
+      typo: [
+        { label: t.report.typoLabels.families, value: 68, tone: "neutral" },
+        { label: t.report.typoLabels.spending, value: 82, tone: "positive" },
+        { label: t.report.typoLabels.saturation, value: 22, tone: "caution" },
+        { label: t.report.typoLabels.offices, value: 54, tone: "neutral" },
+        { label: t.report.typoLabels.tourists, value: 41, tone: "neutral" },
+        { label: t.report.typoLabels.commerce, value: 75, tone: "positive" },
+      ],
+    },
+    {
+      id: "B",
+      address: t.report.addresses.loretteEs,
+      quartier: t.report.neighborhoods.pigalle,
+      score: 84,
+      surface: "65 m²",
+      loyer: "3 600 €",
+      loyerDetail: "3 600 €/mois",
+      concur: 2,
+      flux: t.report.flux.strong,
+      atouts: t.report.atoutsB,
+      points: t.report.pointsB,
+      typoZone: t.report.neighborhoods.pigalle,
+      typo: [
+        { label: t.report.typoLabels.families, value: 52, tone: "neutral" },
+        { label: t.report.typoLabels.spending, value: 76, tone: "positive" },
+        { label: t.report.typoLabels.saturation, value: 38, tone: "caution" },
+        { label: t.report.typoLabels.offices, value: 61, tone: "neutral" },
+        { label: t.report.typoLabels.tourists, value: 48, tone: "neutral" },
+        { label: t.report.typoLabels.commerce, value: 69, tone: "positive" },
+      ],
+    },
+    {
+      id: "C",
+      address: t.report.addresses.faubourg,
+      quartier: t.report.neighborhoods.bastille,
+      score: 76,
+      surface: "68 m²",
+      loyer: "2 900 €",
+      loyerDetail: "2 900 €/mois",
+      concur: 3,
+      flux: t.report.flux.moderate,
+      atouts: t.report.atoutsC,
+      points: t.report.pointsC,
+      typoZone: t.report.neighborhoods.bastille,
+      typo: [
+        { label: t.report.typoLabels.families, value: 58, tone: "neutral" },
+        { label: t.report.typoLabels.spending, value: 64, tone: "positive" },
+        { label: t.report.typoLabels.saturation, value: 44, tone: "caution" },
+        { label: t.report.typoLabels.offices, value: 49, tone: "neutral" },
+        { label: t.report.typoLabels.tourists, value: 55, tone: "neutral" },
+        { label: t.report.typoLabels.commerce, value: 71, tone: "positive" },
+      ],
+    },
+  ];
+}
 
 function IconPdf() {
   return (
@@ -100,6 +84,7 @@ function IconPdf() {
 }
 
 function ReportMap({ focusId }) {
+  const { t } = useTranslation();
   return (
     <div className="report-map mini-map" aria-hidden>
       <div className="mini-map__base" />
@@ -114,7 +99,7 @@ function ReportMap({ focusId }) {
       <div className="mini-map__road mini-map__road--main-v" />
       <div className="mini-map__road mini-map__road--lane1" />
       <div className="mini-map__road mini-map__road--lane2" />
-      <div className="mini-map__parc">Parc</div>
+      <div className="mini-map__parc">{t.miniMap.park}</div>
 
       {["A", "B", "C"].map((id) => {
         const pos = `report-map__pos-${id.toLowerCase()}`;
@@ -151,19 +136,23 @@ function TypoBar({ label, value, tone }) {
 }
 
 export default function Report({ data, onHome, onAffiner, session, onAuthOpen, onLogout, accountMenu }) {
+  const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState("A");
 
-  const headline = useMemo(() => {
-    if (data?.reportTitle) return data.reportTitle;
-    const ville = (data?.ville || "Paris").trim() || "Paris";
-    const concept = CONCEPT_TITLES[data?.concept] || "Boulangerie artisan";
-    return `${ville} — ${concept}`;
-  }, [data]);
+  const locaux = useMemo(() => buildLocaux(t), [t]);
 
-  const active = LOCAUX.find((l) => l.id === selectedId) || LOCAUX[0];
+  const headline = useMemo(() => {
+    const ville = (data?.ville || "Paris").trim() || "Paris";
+    const concept = t.concepts[data?.concept] || t.concepts.auteur;
+    return `${ville} — ${concept}`;
+  }, [data, t]);
+
+  const active = locaux.find((l) => l.id === selectedId) || locaux[0];
   const marketPriceValue = data?.marketPrice?.averagePrice;
   const hasMarketPrice = typeof marketPriceValue === "number" && Number.isFinite(marketPriceValue);
-  const marketPriceText = hasMarketPrice ? `${Math.round(marketPriceValue).toLocaleString("fr-FR")} €/m²` : "Non disponible";
+  const marketPriceText = hasMarketPrice
+    ? `${Math.round(marketPriceValue).toLocaleString(t.dateLocale)} €/m²`
+    : t.report.marketUnavailable;
 
   return (
     <div className="report-page">
@@ -171,23 +160,24 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
         <BrandLogoButton onClick={onHome} />
         <div className="nav__pill">
           <button type="button" className="nav__pill-btn" onClick={onHome}>
-            La méthode
+            {t.nav.method}
           </button>
           <button type="button" className="nav__pill-btn" onClick={onHome}>
-            La carte
+            {t.nav.map}
           </button>
           <button type="button" className="nav__pill-btn" onClick={onHome}>
-            Tarifs
+            {t.nav.pricing}
           </button>
         </div>
         <div className="nav__actions">
+          <LanguageToggle />
           {session?.user ? (
             <button type="button" className="nav__link nav__link-btn report-page__muted" onClick={onLogout}>
-              Déconnexion
+              {t.nav.logout}
             </button>
           ) : (
             <button type="button" className="nav__link nav__link-btn report-page__muted" onClick={onAuthOpen}>
-              Connexion
+              {t.nav.login}
             </button>
           )}
           {accountMenu}
@@ -196,40 +186,40 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
 
       <header className="report-hero">
         <div className="report-hero__text">
-          <p className="report-hero__eyebrow">Rapport d&apos;implantation</p>
+          <p className="report-hero__eyebrow">{t.report.eyebrow}</p>
           <h1 className="report-hero__title">{headline}</h1>
-          <p className="report-hero__sub">3 locaux compatibles · Mise à jour il y a 2 minutes</p>
+          <p className="report-hero__sub">{t.report.sub}</p>
           <div className="market-context">
-            <p className="market-context__label">Prix immobiliers département</p>
+            <p className="market-context__label">{t.report.marketLabel}</p>
             <p className="market-context__value">{marketPriceText}</p>
             {data?.marketPrice ? (
               <p className="market-context__meta">
-                {data.marketPrice.departmentName || "Département inconnu"}
+                {data.marketPrice.departmentName || t.report.unknownDept}
                 {data.marketPrice.departmentCode ? ` (${data.marketPrice.departmentCode})` : ""}
-                {" · source "}
+                {t.report.sourcePrefix}
                 {data.marketPrice.sourceTable}
               </p>
             ) : (
-              <p className="market-context__meta">Aucune donnée trouvée pour cette ville dans la table Supabase.</p>
+              <p className="market-context__meta">{t.report.noMarketData}</p>
             )}
           </div>
         </div>
         <div className="report-hero__actions">
           <button type="button" className="btn btn--outline-report">
             <IconPdf />
-            Exporter PDF
+            {t.report.exportPdf}
           </button>
           <button type="button" className="btn btn--dark btn--sm" onClick={onAffiner}>
-            Affiner
+            {t.report.refine}
           </button>
         </div>
       </header>
 
       <div className="report-grid">
         <aside className="report-grid__list">
-          <h2 className="report-list-title">Locaux classés par compatibilité</h2>
+          <h2 className="report-list-title">{t.report.listTitle}</h2>
           <ul className="report-loc-list">
-            {LOCAUX.map((loc) => {
+            {locaux.map((loc) => {
               const on = loc.id === selectedId;
               return (
                 <li key={loc.id}>
@@ -251,15 +241,15 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
                     </div>
                     <div className="report-loc-card__stats">
                       <div>
-                        <span className="report-loc-card__lbl">Surface</span>
+                        <span className="report-loc-card__lbl">{t.report.surface}</span>
                         <span className="report-loc-card__val">{loc.surface}</span>
                       </div>
                       <div>
-                        <span className="report-loc-card__lbl">Loyer</span>
+                        <span className="report-loc-card__lbl">{t.report.rent}</span>
                         <span className="report-loc-card__val">{loc.loyer}</span>
                       </div>
                       <div>
-                        <span className="report-loc-card__lbl">Concur.</span>
+                        <span className="report-loc-card__lbl">{t.report.competition}</span>
                         <span className="report-loc-card__val">{loc.concur}</span>
                       </div>
                     </div>
@@ -278,7 +268,7 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
           <article className="report-detail">
             <header className="report-detail__head">
               <div>
-                <p className="report-detail__tag">Local {active.id}</p>
+                <p className="report-detail__tag">{t.report.localTag(active.id)}</p>
                 <h2 className="report-detail__title">{active.address}</h2>
                 <p className="report-detail__sub">{active.quartier}</p>
               </div>
@@ -291,19 +281,19 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
 
             <div className="report-detail__metrics">
               <div className="report-metric">
-                <span className="report-metric__lbl">Surface</span>
+                <span className="report-metric__lbl">{t.report.surface}</span>
                 <span className="report-metric__val">{active.surface}</span>
               </div>
               <div className="report-metric">
-                <span className="report-metric__lbl">Loyer</span>
+                <span className="report-metric__lbl">{t.report.rent}</span>
                 <span className="report-metric__val">{active.loyerDetail}</span>
               </div>
               <div className="report-metric">
-                <span className="report-metric__lbl">Flux piéton</span>
+                <span className="report-metric__lbl">{t.report.pedestrianFlux}</span>
                 <span className="report-metric__val">{active.flux}</span>
               </div>
               <div className="report-metric">
-                <span className="report-metric__lbl">Concurrents 500m</span>
+                <span className="report-metric__lbl">{t.report.competitors500}</span>
                 <span className="report-metric__val">{active.concur}</span>
               </div>
             </div>
@@ -314,11 +304,11 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
                   <span className="report-block__ico report-block__ico--ok" aria-hidden>
                     ✓
                   </span>
-                  Atouts du quartier
+                  {t.report.strengths}
                 </h3>
                 <ul className="report-block__list">
-                  {active.atouts.map((t) => (
-                    <li key={t}>{t}</li>
+                  {active.atouts.map((tx) => (
+                    <li key={tx}>{tx}</li>
                   ))}
                 </ul>
               </section>
@@ -327,11 +317,11 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
                   <span className="report-block__ico report-block__ico--alert" aria-hidden>
                     !
                   </span>
-                  Points d&apos;attention
+                  {t.report.attention}
                 </h3>
                 <ul className="report-block__list">
-                  {active.points.map((t) => (
-                    <li key={t}>{t}</li>
+                  {active.points.map((tx) => (
+                    <li key={tx}>{tx}</li>
                   ))}
                 </ul>
               </section>
@@ -340,10 +330,8 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
             <hr className="report-detail__rule" />
 
             <section className="report-typo">
-              <h3 className="report-typo__title">Typologie du secteur</h3>
-              <p className="report-typo__sub">
-                Analyse croisée INSEE + relevés terrain · {active.typoZone}
-              </p>
+              <h3 className="report-typo__title">{t.report.typoTitle}</h3>
+              <p className="report-typo__sub">{t.report.typoSub(active.typoZone)}</p>
               <div className="report-typo__grid">
                 <div>
                   {active.typo.slice(0, 3).map((row) => (
@@ -360,10 +348,10 @@ export default function Report({ data, onHome, onAffiner, session, onAuthOpen, o
 
             <footer className="report-detail__foot">
               <button type="button" className="btn btn--report-primary">
-                Demander une visite
+                {t.report.requestVisit}
               </button>
               <button type="button" className="btn btn--report-secondary">
-                Sauvegarder ce local
+                {t.report.saveLocal}
               </button>
             </footer>
           </article>

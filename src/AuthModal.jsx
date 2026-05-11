@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { signInWithPassword, signUpWithPassword } from "./lib/supabaseAuth";
+import { useTranslation } from "./lib/i18n.jsx";
 
 export default function AuthModal({ onClose }) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -9,7 +11,7 @@ export default function AuthModal({ onClose }) {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const submitLabel = mode === "signin" ? "Se connecter" : "Créer un compte";
+  const submitLabel = mode === "signin" ? t.auth.submitSignin : t.auth.submitSignup;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -23,28 +25,28 @@ export default function AuthModal({ onClose }) {
       if (error) throw error;
 
       if (mode === "signup" && !data.session) {
-        setSuccessMsg("Compte créé. Vérifiez vos emails pour confirmer votre adresse.");
+        setSuccessMsg(t.auth.signupSuccess);
       } else {
         onClose?.();
       }
     } catch (error) {
-      setErrorMsg(error.message || "Erreur de connexion.");
+      setErrorMsg(error.message || t.auth.genericError);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="auth-modal__backdrop" role="dialog" aria-modal="true" aria-label="Connexion">
+    <div className="auth-modal__backdrop" role="dialog" aria-modal="true" aria-label={t.auth.titleSignin}>
       <div className="auth-modal">
-        <button type="button" className="auth-modal__close" onClick={onClose} aria-label="Fermer">
+        <button type="button" className="auth-modal__close" onClick={onClose} aria-label={t.auth.close}>
           ×
         </button>
-        <h2 className="auth-modal__title">{mode === "signin" ? "Connexion" : "Créer un compte"}</h2>
+        <h2 className="auth-modal__title">{mode === "signin" ? t.auth.titleSignin : t.auth.titleSignup}</h2>
 
         <form onSubmit={handleSubmit} className="auth-modal__form">
           <label className="auth-modal__label">
-            Email
+            {t.auth.email}
             <input
               className="auth-modal__input"
               type="email"
@@ -55,7 +57,7 @@ export default function AuthModal({ onClose }) {
             />
           </label>
           <label className="auth-modal__label">
-            Mot de passe
+            {t.auth.password}
             <input
               className="auth-modal__input"
               type="password"
@@ -71,7 +73,7 @@ export default function AuthModal({ onClose }) {
           {successMsg ? <p className="auth-modal__success">{successMsg}</p> : null}
 
           <button type="submit" className="btn btn--dark auth-modal__submit" disabled={isLoading}>
-            {isLoading ? "Chargement..." : submitLabel}
+            {isLoading ? t.auth.loading : submitLabel}
           </button>
         </form>
 
@@ -84,7 +86,7 @@ export default function AuthModal({ onClose }) {
             setSuccessMsg("");
           }}
         >
-          {mode === "signin" ? "Pas encore de compte ? Créer un compte" : "Déjà un compte ? Se connecter"}
+          {mode === "signin" ? t.auth.switchToSignup : t.auth.switchToSignin}
         </button>
       </div>
     </div>
