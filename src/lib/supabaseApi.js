@@ -68,6 +68,24 @@ export async function saveReport(params) {
   return data;
 }
 
+export async function getCarreaux() {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("carreaux_score")
+    .select("id, score_final, score_revenu, score_population, score_concurrence, nb_boulangeries, revenu_moyen, population, geometry");
+  if (error) { console.warn("getCarreaux error", error); return []; }
+  return data;
+}
+
+export async function getBoulangeries() {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("boulangeries")
+    .select("siret, nom, adresse, latitude, longitude");
+  if (error) { console.warn("getBoulangeries error", error); return []; }
+  return data;
+}
+
 export async function getImmoPriceContext(city) {
   if (!supabase || !city) return null;
 

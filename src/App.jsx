@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Questionnaire from "./Questionnaire.jsx";
 import Report from "./Report.jsx";
 import { MapPinMarker, MapPinGrey } from "./MapPins.jsx";
+import MapScore from "./MapScore.jsx";
 import { BrandLogoLink } from "./BrandLogo.jsx";
 import { getImmoPriceContext, saveQuestionnaire, saveReport } from "./lib/supabaseApi";
 import AuthModal from "./AuthModal.jsx";
@@ -457,35 +458,6 @@ function IconEuro() {
   );
 }
 
-function SectionMapIllustration() {
-  const { t } = useTranslation();
-  return (
-    <div className="feature-map" aria-hidden>
-      <div className="feature-map__inner">
-        <div className="feature-map__base" />
-        <div className="feature-map__grid" />
-        <div className="feature-map__footprints">
-          <span className="feature-map__fp feature-map__fp--1" />
-          <span className="feature-map__fp feature-map__fp--2" />
-          <span className="feature-map__fp feature-map__fp--3" />
-        </div>
-        <div className="feature-map__road feature-map__road--h" />
-        <div className="feature-map__road feature-map__road--v" />
-        <div className="feature-map__parc">{t.miniMap.park}</div>
-        <div className="feature-map__subject-wrap">
-          <span className="feature-map__pulse" />
-          <MapPinMarker variant="subject" letter="A" />
-        </div>
-        <MapPinMarker variant="competitor" letter="B" className="feature-map__pin-b" />
-        <MapPinMarker variant="competitor" letter="C" className="feature-map__pin-c" />
-        <MapPinGrey className="feature-map__grey feature-map__grey--1" />
-        <MapPinGrey className="feature-map__grey feature-map__grey--2" />
-        <MapPinGrey className="feature-map__grey feature-map__grey--3" />
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
   const { t } = useTranslation();
   const [flow, setFlow] = useState("landing");
@@ -624,7 +596,6 @@ export default function App() {
           <div className="nav__pill">
             <a href="#methode">{t.nav.method}</a>
             <a href="#carte">{t.nav.map}</a>
-            <a href="#tarifs">{t.nav.pricing}</a>
           </div>
           <div className="nav__actions">
             <LanguageToggle />
@@ -680,8 +651,8 @@ export default function App() {
           </article>
         </div>
 
-        <div className="feature" id="carte">
-          <SectionMapIllustration />
+        <div className="feature" id="carte" style={{ flexDirection: "column", gap: "2rem" }}>
+          <MapScore />
           <div className="feature__copy">
             <p className="eyebrow eyebrow--bronze">{t.method.featureEyebrow}</p>
             <h2 className="section-title">{t.method.featureTitle}</h2>
