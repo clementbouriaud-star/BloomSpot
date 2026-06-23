@@ -86,6 +86,15 @@ export async function getBoulangeries() {
   return data;
 }
 
+export async function getZonesAccessibilite() {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("zones_accessibilite")
+    .select("id, nom, type_zone, geometry");
+  if (error) { console.warn("getZonesAccessibilite error", error); return []; }
+  return data;
+}
+
 export async function getImmoPriceContext(city) {
   if (!supabase || !city) return null;
 
